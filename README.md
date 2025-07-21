@@ -1,120 +1,159 @@
-*“While coding, did you forget to pray?”*
+# PrayTime - VSCode Prayer Times Extension
 
-# VSCode Prayer Times
+A professional-grade VSCode extension that displays Islamic prayer times with a modern, senior-level architecture.
 
-A **Visual Studio Code extension** that seamlessly integrates Islamic prayer times into your coding workflow. Never miss a prayer again—stay focused on your code and your faith.
+## 🌟 Features
 
----
+- **Real-time Prayer Times**: Automatically detects your location and displays accurate prayer times
+- **Smart Caching**: Intelligent caching system to minimize API calls and improve performance
+- **Current Prayer Highlighting**: Visual indicators showing current and next prayer times
+- **Auto-refresh**: Automatic updates every 4 hours and manual refresh capability
+- **Modern UI**: Clean, VSCode-themed interface with Turkish prayer names
+- **Offline Support**: Graceful fallback when network is unavailable
+- **Debug Mode**: Built-in debugging tools for troubleshooting
 
-## 🚀 Key Features
+## 🏗️ Architecture
 
-* **VS Code Integration**: Fully integrated as an extension—no external apps needed.
-* **Activity Bar Panel**: Click the prayer icon in the Activity Bar to view today’s full prayer schedule.
-* **Status Bar Countdown**: Live countdown to the next upcoming prayer right in your Status Bar.
-* **Pre-Prayer Alerts**: Configurable reminder (default 5 minutes) before each prayer.
-* **On-Time Notifications**: Receive a notification exactly when prayer time begins.
-* **Automatic Geolocation**: Detects your city and country through secure IP lookup.
-* **Daily Cache & Midnight Refresh**: Caches data for the day, automatically refreshing at midnight.
-* **Manual Refresh Command**: Instantly update prayer times via the Command Palette (`Refresh Prayer Times`).
+This extension follows enterprise-level architectural patterns:
 
----
+### Core Components
 
-## ⚙️ Installation
+- **Services Layer**: Centralized HTTP and Cache services with retry logic
+- **Providers Layer**: Specialized providers for geolocation, prayer times, and webview
+- **Configuration Management**: Centralized configuration with type safety
+- **Type System**: Comprehensive TypeScript interfaces and enums
+- **Error Handling**: Robust error handling with user-friendly messages
 
-1. **Prerequisites**
+### Design Patterns
 
-   * [Node.js](https://nodejs.org/) (v14 or newer)
-   * Visual Studio Code (v1.60 or newer)
+- **Dependency Injection**: Clean separation of concerns
+- **Singleton Pattern**: Centralized state management
+- **Observer Pattern**: Event-driven webview communication
+- **Strategy Pattern**: Multiple API endpoints with fallback
+- **Cache-Aside Pattern**: Intelligent caching strategy
 
-2. **Clone the repository**
+## 📁 Project Structure
 
-   ```bash
-   git clone https://github.com/<your-username>/vscode-prayer-times.git
-   cd vscode-prayer-times
-   ```
-
-3. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-4. **Build the extension**
-
-   ```bash
-   npm run compile
-   ```
-
-5. **Launch the extension**
-
-   * Open this folder in VS Code.
-   * Press <kbd>F5</kbd> to start an Extension Development Host window.
-   * The extension will activate on startup and display prayer times.
-
----
-
-## 💡 Usage
-
-* **Status Bar**: Watch a live countdown to the next prayer.
-* **Activity Bar**: Click the Prayer Times icon for today’s full schedule.
-* **Notifications**:
-
-  * Pre-prayer reminder (default 5 minutes before).
-  * On-time alert at the exact prayer moment.
-* **Commands**:
-
-  * `Refresh Prayer Times` – Manually fetch and update times.
-
----
-
-## 🛠 Configuration
-
-Customize settings in your VS Code `settings.json`:
-
-```json
-{
-  "prayerTimes.calculationMethod": 13,       // Calculation method (e.g., Diyanet = 13)
-  "prayerTimes.overrideLocation": "City, Country",
-  "prayerTimes.preAlertMinutes": 5          // Minutes before prayer for reminder
-}
+```
+src/
+├── config/           # Configuration management
+│   └── extension.config.ts
+├── services/         # Business logic services
+│   ├── CacheService.ts
+│   └── HttpService.ts
+├── providers/        # VSCode-specific providers
+│   ├── GeoLocationProvider.ts
+│   ├── PrayerTimesProvider.ts
+│   └── PrayerViewProvider.ts
+├── types/           # TypeScript type definitions
+│   └── index.ts
+├── webview/         # UI components
+│   ├── index.html
+│   ├── script.js
+│   └── style.css
+└── extension.ts     # Main extension entry point
 ```
 
----
+## 🚀 Installation
 
-## ✅ Testing
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Compile: `npm run compile`
+4. Debug: Press F5 in VSCode
 
-1. **Unit Tests**
+## 🔧 Commands
 
-   ```bash
-   npm test
-   ```
+- **Refresh Prayer Times**: Manually refresh prayer times data
+- **Clear Cache**: Clear cached data and refresh
 
-2. **Manual End-to-End**
+## 🎨 UI Features
 
-   * Launch via <kbd>F5</kbd>.
-   * Confirm countdown appears in the Status Bar.
-   * Open Activity Bar panel to view schedule.
-   * Wait for or simulate prayer times to see notifications.
-   * Run `Refresh Prayer Times` to force-update.
+- **Turkish Prayer Names**: İmsak, Güneş, Öğle, İkindi, Günbatımı, Akşam, Yatsı
+- **Visual Indicators**: Current prayer (●) and next prayer (○) highlighting
+- **Responsive Design**: Adapts to different panel sizes
+- **Loading States**: Visual feedback during data fetching
+- **Error Handling**: User-friendly error messages
 
----
+## ⚡ Performance
+
+- **Smart Caching**: 24-hour cache with automatic expiration
+- **API Failover**: Multiple geolocation APIs for reliability
+- **Retry Logic**: Exponential backoff for failed requests
+- **Memory Efficient**: Minimal memory footprint with cleanup
+
+## 🛡️ Error Handling
+
+- Graceful fallback to default location (Istanbul, Turkey)
+- Network timeout handling (10 seconds)
+- API failure recovery with multiple endpoints
+- User-friendly error messages in Turkish
+
+## 🔄 Data Sources
+
+- **Prayer Times**: Aladhan API with Turkey Diyanet method
+- **Geolocation**: Multiple IP geolocation services
+  - ipapi.co
+  - ipinfo.io
+  - ip-api.com
+
+## 🎯 Technical Highlights
+
+### HTTP Service
+- Configurable retry attempts with exponential backoff
+- Request timeout management
+- Multiple endpoint failover
+- Generic type support
+
+### Cache Service
+- Generic cache implementation
+- Automatic expiration handling
+- Memory-efficient storage
+- Easy cache invalidation
+
+### Extension State Management
+- Centralized state with singleton pattern
+- Proper resource cleanup
+- Event-driven architecture
+- Lifecycle management
+
+## 🧪 Development
+
+```bash
+# Install dependencies
+npm install
+
+# Compile TypeScript
+npm run compile
+
+# Watch mode for development
+npm run watch
+
+# Lint code
+npm run lint
+
+# Type checking
+npm run check-types
+
+# Build for production
+npm run package
+```
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Please open an issue or submit a pull request.
+This project follows professional development standards:
 
----
-
-## 📅 Roadmap
-
-* Calendar heatmap view of prayer times
-* Localization and regional support
-* Theme-aware styling (light/dark)
-* Unit tests for Webview components
-* Screenshots and visual assets
-
----
+- TypeScript strict mode enabled
+- ESLint configuration for code quality
+- Proper error handling throughout
+- Comprehensive type definitions
+- Clean architecture principles
 
 ## 📄 License
 
-Licensed under the MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License.
+
+## 🙏 Acknowledgments
+
+- Aladhan API for accurate prayer times
+- Various IP geolocation services
+- VSCode extension development community

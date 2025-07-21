@@ -2,63 +2,171 @@ import * as vscode from 'vscode';
 import { GeoLocationProvider } from './providers/GeoLocationProvider';
 import { PrayerTimesProvider } from './providers/PrayerTimesProvider';
 import { PrayerViewProvider } from './providers/PrayerViewProvider';
+import { CacheService } from './services/CacheService';
+import { COMMANDS, VIEW_IDS } from './config/extension.config';
 
-// Singleton instances
-let prayerProvider: PrayerTimesProvider;
-let geoProvider: GeoLocationProvider;
-let prayerViewProvider: PrayerViewProvider;
+// Extension state management
+class ExtensionState {
+    private static instance: ExtensionState;
+    
+    public geoProvider!: GeoLocationProvider;
+    public prayerProvider!: PrayerTimesProvider;
+    public prayerViewProvider!: PrayerViewProvider;
+    public cacheService!: CacheService;
+    
+    private context!: vscode.ExtensionContext;
+    private disposables: vscode.Disposable[] = [];
 
-// Track the WebView panel
-let prayerViewRegistration: vscode.Disposable | undefined;
+    public static getInstance(): ExtensionState {
+        if (!ExtensionState.instance) {
+            ExtensionState.instance = new ExtensionState();
+        }
+        return ExtensionState.instance;
+    }
 
-export async function activate(context: vscode.ExtensionContext) {
-    console.log('PrayTime extension activating...');
+    public initialize(context: vscode.ExtensionContext): void {
+        this.context = context;
+        this.cacheService = new CacheService(context.globalState);
+        this.initializeProviders();
+        this.registerCommands();
+        this.registerViews();
+    }
 
-    // Initialize providers
-    geoProvider = new GeoLocationProvider(context.globalState);
-    prayerProvider = new PrayerTimesProvider(geoProvider, context.globalState);
-    prayerViewProvider = new PrayerViewProvider(context);
+    private initializeProviders(): void {
+        this.geoProvider = new GeoLocationProvider(this.context.globalState);
+        this.prayerProvider = new PrayerTimesProvider(this.geoProvider, this.context.globalState);
+        this.prayerViewProvider = new PrayerViewProvider(this.context);
+    }
 
-    // Register the WebView provider
-    prayerViewRegistration = vscode.window.registerWebviewViewProvider(
-        'prayerTimesView',
-        prayerViewProvider
-    );
+    private registerCommands(): void {
+        // Register refresh command
+        const refreshCommand = vscode.commands.registerCommand(
+            COMMANDS.REFRESH_PRAYER_TIMES, 
+            () => this.refreshPrayerTimes()
+        );
 
-    context.subscriptions.push(prayerViewRegistration);
+        // Register clear cache command
+        const clearCacheCommand = vscode.commands.registerCommand(
+            'extension.clearCache',
+            () => this.clearCache()
+        );
 
-    // Register refresh command
-    context.subscriptions.push(
-        vscode.commands.registerCommand('extension.refreshPrayerTimes', () => refreshPrayerTimes())
-    );
+        this.disposables.push(refreshCommand, clearCacheCommand);
+        this.context.subscriptions.push(...this.disposables);
+    }
 
-    // Wait a bit to ensure WebView is properly initialized before sending data
-    setTimeout(async () => {
-        await refreshPrayerTimes();
-        console.log('PrayTime extension activated successfully');
-    }, 1500);
-}
+    private registerViews(): void {
+        // Register the WebView provider
+        const prayerViewRegistration = vscode.window.registerWebviewViewProvider(
+            VIEW_IDS.PRAYER_TIMES_VIEW,
+            this.prayerViewProvider,
+            {
+                webviewOptions: {
+                    retainContextWhenHidden: true
+                }
+            }
+        );
 
-async function refreshPrayerTimes() {
-    try {
-        console.log('Refreshing prayer times...');
-        const prayerTimes = await prayerProvider.getPrayerTimes();
-        console.log('Prayer times fetched successfully');
+        this.disposables.push(prayerViewRegistration);
+        this.context.subscriptions.push(prayerViewRegistration);
+    }
 
-        // Send updated prayer times to WebView
-        prayerViewProvider.updatePrayerTimes(prayerTimes);
-    } catch (err) {
-        console.error('Namaz vakitleri alınamadı:', err);
-        vscode.window.showErrorMessage('Namaz vakitleri alınamadı');
+    public async refreshPrayerTimes(): Promise<void> {
+        try {
+            console.log('Refreshing prayer times...');
+            
+            // Show status bar message
+            const statusBarMessage = vscode.window.setStatusBarMessage(
+                '$(sync~spin) Namaz vakitleri güncelleniyor...'
+            );
+
+            const prayerTimes = await this.prayerProvider.refreshPrayerTimes();
+            console.log('Prayer times refreshed successfully');
+
+            // Send updated prayer times to WebView
+            this.prayerViewProvider.updatePrayerTimes(prayerTimes);
+
+            statusBarMessage.dispose();
+            
+            // Show success message briefly
+            vscode.window.setStatusBarMessage(
+                '$(check) Namaz vakitleri güncellendi', 
+                3000
+            );
+
+        } catch (error) {
+            console.error('Failed to refresh prayer times:', error);
+            vscode.window.showErrorMessage(
+                'Namaz vakitleri güncellenemedi. Lütfen internet bağlantınızı kontrol edin.'
+            );
+        }
+    }
+
+    public async clearCache(): Promise<void> {
+        try {
+            this.cacheService.clear();
+            await this.refreshPrayerTimes();
+            vscode.window.showInformationMessage('Önbellek temizlendi ve veriler yenilendi.');
+        } catch (error) {
+            console.error('Failed to clear cache:', error);
+            vscode.window.showErrorMessage('Önbellek temizlenirken hata oluştu.');
+        }
+    }
+
+    public dispose(): void {
+        this.disposables.forEach(disposable => disposable.dispose());
+        this.disposables = [];
     }
 }
 
-export function deactivate() {
-    console.log('PrayTime extension deactivating...');
+// Main activation function
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
+    console.log('PrayTime extension activating...');
 
-    // Clean up resources
-    if (prayerViewRegistration) {
-        prayerViewRegistration.dispose();
-        prayerViewRegistration = undefined;
+    try {
+        // Initialize extension state
+        const extensionState = ExtensionState.getInstance();
+        extensionState.initialize(context);
+
+        // Initial prayer times load with delay to ensure WebView is ready
+        setTimeout(async () => {
+            try {
+                await extensionState.refreshPrayerTimes();
+                console.log('PrayTime extension activated successfully');
+            } catch (error) {
+                console.error('Failed to load initial prayer times:', error);
+                // Don't show error immediately on startup as network might not be ready
+            }
+        }, 2000);
+
+        // Setup periodic refresh (every 4 hours)
+        const refreshInterval = setInterval(async () => {
+            try {
+                await extensionState.refreshPrayerTimes();
+            } catch (error) {
+                console.error('Periodic refresh failed:', error);
+            }
+        }, 4 * 60 * 60 * 1000); // 4 hours
+
+        context.subscriptions.push({
+            dispose: () => clearInterval(refreshInterval)
+        });
+
+    } catch (error) {
+        console.error('Extension activation failed:', error);
+        vscode.window.showErrorMessage('PrayTime uzantısı başlatılamadı.');
+        throw error;
+    }
+}
+
+// Deactivation function
+export function deactivate(): void {
+    console.log('PrayTime extension deactivating...');
+    
+    try {
+        ExtensionState.getInstance().dispose();
+        console.log('PrayTime extension deactivated successfully');
+    } catch (error) {
+        console.error('Error during deactivation:', error);
     }
 }

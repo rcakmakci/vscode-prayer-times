@@ -1,89 +1,80 @@
-import Location from "../models/Location";
 import * as vscode from "vscode";
-
-interface GeoIPResponse {
-    country_name?: string;
-    country?: string;
-    city?: string;
-}
+import { Location, GeoIPResponse } from "../types";
+import { CacheService } from "../services/CacheService";
+import { HttpService } from "../services/HttpService";
+import { EXTENSION_CONFIG, GEO_API_ENDPOINTS, CACHE_KEYS } from "../config/extension.config";
 
 export class GeoLocationProvider {
-    private cachedLocation: Location | null = null;
-    private readonly defaultLocation: Location = {
-        Country: "Turkey",
-        City: "Istanbul"
-    };
+    private readonly httpService: HttpService;
+    private readonly cacheService: CacheService;
 
-    constructor(private readonly globalState: vscode.Memento) {
-        this.cachedLocation = this.globalState.get("location") as Location | null;
+    constructor(globalState: vscode.Memento) {
+        this.httpService = new HttpService();
+        this.cacheService = new CacheService(globalState);
     }
 
     public setLocation(location: Location): void {
-        this.cachedLocation = location;
-        this.globalState.update("location", location);
+        this.cacheService.set(CACHE_KEYS.LOCATION, location, EXTENSION_CONFIG.cacheExpirationHours);
     }
 
     public async getLocationFromIP(): Promise<Location> {
-        if (this.cachedLocation) {
-            return this.cachedLocation;
+        // Try to get from cache first
+        const cachedLocation = this.cacheService.get<Location>(CACHE_KEYS.LOCATION);
+        if (cachedLocation) {
+            return cachedLocation;
         }
 
         try {
-            // Try multiple geolocation APIs in case one fails
-            return await this.tryGeoLocationAPIs();
+            const location = await this.fetchLocationFromAPIs();
+            this.setLocation(location);
+            return location;
         } catch (error) {
-            console.error('GeoLocationProvider:getLocation error, using default.', error);
-            return this.defaultLocation;
+            console.error('GeoLocationProvider: Failed to get location, using default.', error);
+            return EXTENSION_CONFIG.defaultLocation;
         }
     }
 
-    private async tryGeoLocationAPIs(): Promise<Location> {
-        const apis = [
-            'https://ipapi.co/json/',
-            'https://ipinfo.io/json',
-            'https://ip-api.com/json'
-        ];
+    private async fetchLocationFromAPIs(): Promise<Location> {
+        const endpoints = GEO_API_ENDPOINTS;
+        
+        try {
+            const response = await this.httpService.tryMultipleEndpoints<GeoIPResponse>(
+                endpoints, 
+                EXTENSION_CONFIG.retryAttempts
+            );
 
-        for (const api of apis) {
-            try {
-                const response = await fetch(api, {
-                    headers: { 'User-Agent': 'VSCode-PrayTime-Extension/0.0.1' }
-                });
+            return this.parseLocationResponse(response);
+        } catch (error) {
+            throw new Error(`All geolocation APIs failed: ${error}`);
+        }
+    }
 
-                if (!response.ok) {
-                    continue;
-                }
+    private parseLocationResponse(data: GeoIPResponse): Location {
+        // Handle different API response formats
+        let country = '';
+        let city = '';
 
-                const data = await response.json() as GeoIPResponse;
-
-                // Handle different API response formats
-                let country = '';
-                let city = '';
-
-                if (data.country_name) {
-                    country = data.country_name;
-                    city = data.city || '';
-                } else if (data.country) {
-                    country = data.country;
-                    city = data.city || '';
-                }
-
-                if (country && city) {
-                    const location: Location = {
-                        Country: country,
-                        City: city,
-                    };
-                    this.setLocation(location);
-                    return location;
-                }
-            } catch (e) {
-                console.warn(`Failed to fetch from ${api}:`, e);
-                // Continue to the next API
-            }
+        if (data.country_name) {
+            country = data.country_name;
+            city = data.city || '';
+        } else if (data.country) {
+            country = data.country;
+            city = data.city || '';
         }
 
-        // If all APIs fail, use default
-        throw new Error('All geolocation APIs failed');
+        if (!country || !city) {
+            throw new Error('Invalid location data received from API');
+        }
+
+        return {
+            Country: country,
+            City: city,
+        };
+    }
+
+    public async refreshLocation(): Promise<Location> {
+        this.cacheService.delete(CACHE_KEYS.LOCATION);
+        return this.getLocationFromIP();
     }
 }
 

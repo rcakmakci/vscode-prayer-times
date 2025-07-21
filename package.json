@@ -19,7 +19,13 @@
     "commands": [
       {
         "command": "extension.refreshPrayerTimes",
-        "title": "Refresh Prayer Times"
+        "title": "Refresh Prayer Times",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "extension.clearCache",
+        "title": "Clear Prayer Times Cache",
+        "icon": "$(clear-all)"
       }
     ],
     "viewsContainers": {

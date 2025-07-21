@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { PrayerTimes } from "../models/PrayerTimes";
+import { PrayerTimes } from "../types";
 import { join } from "path";
 
 export class PrayerViewProvider implements vscode.WebviewViewProvider {
@@ -84,7 +84,7 @@ export class PrayerViewProvider implements vscode.WebviewViewProvider {
             const htmlContent = await this.getFileContent(htmlPath);
 
             const scriptUri = this._view.webview.asWebviewUri(
-                vscode.Uri.file(join(this.context.extensionPath, 'src', 'webview', 'scirpt.js'))
+                vscode.Uri.file(join(this.context.extensionPath, 'src', 'webview', 'script.js'))
             );
 
             const styleUri = this._view.webview.asWebviewUri(

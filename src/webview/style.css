@@ -1,116 +1,287 @@
-body {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-		Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-	padding: 0;
-	margin: 0;
-	color: var(--vscode-foreground);
-	background-color: var(--vscode-editor-background);
-}
-
+/* Container styling */
 .container {
-	padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    padding: 16px;
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
+/* Header styling */
 h1 {
-	font-size: 18px;
-	margin-bottom: 16px;
-	color: var(--vscode-editor-foreground);
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: var(--vscode-titleBar-activeForeground);
+    text-align: center;
+    border-bottom: 1px solid var(--vscode-panel-border);
+    padding-bottom: 8px;
 }
 
+/* Location and date info */
 .location-info {
-	margin-bottom: 12px;
-	font-size: 13px;
-	color: var(--vscode-descriptionForeground);
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 8px 12px;
+    background-color: var(--vscode-editor-inactiveSelectionBackground);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
 }
 
+.location-info span {
+    font-weight: 500;
+}
+
+/* Prayer times container */
 .prayer-times-container {
-	margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
-.prayer-time {
-	display: flex;
-	justify-content: space-between;
-	padding: 8px 0;
-	border-bottom: 1px solid var(--vscode-editorWidget-border);
+/* Individual prayer item */
+.prayer-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background-color: var(--vscode-list-inactiveSelectionBackground);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    position: relative;
 }
 
-.prayer-time:last-child {
-	border-bottom: none;
+.prayer-item:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.prayer-item.current {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border-color: var(--vscode-button-background);
+    font-weight: 600;
+}
+
+.prayer-item.current::before {
+    content: "●";
+    position: absolute;
+    left: 6px;
+    color: var(--vscode-button-foreground);
+    font-size: 16px;
+}
+
+.prayer-item.next {
+    background-color: var(--vscode-inputValidation-warningBackground);
+    border-color: var(--vscode-inputValidation-warningBorder);
+    color: var(--vscode-inputValidation-warningForeground);
+}
+
+.prayer-item.next::before {
+    content: "○";
+    position: absolute;
+    left: 6px;
+    color: var(--vscode-inputValidation-warningForeground);
+    font-size: 16px;
+}
+
+.prayer-item.current .prayer-name,
+.prayer-item.current .prayer-time,
+.prayer-item.next .prayer-name,
+.prayer-item.next .prayer-time {
+    margin-left: 16px;
+}
+
+/* Prayer name styling */
 .prayer-name {
-	font-weight: 500;
+    font-size: 14px;
+    font-weight: 500;
+    flex-grow: 1;
 }
 
-.prayer-time-value {
-	font-family: monospace;
+/* Prayer time styling */
+.prayer-time {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    color: var(--vscode-textPreformat-foreground);
+    background-color: var(--vscode-textPreformat-background);
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 50px;
+    text-align: center;
 }
 
-.next-prayer {
-	background-color: var(--vscode-editor-lineHighlightBackground);
-	border-radius: 4px;
-	padding: 8px;
+/* Refresh button */
+#refresh-button {
+    width: 100%;
+    padding: 12px 16px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    margin-bottom: 16px;
 }
 
-button {
-	background-color: var(--vscode-button-background);
-	color: var(--vscode-button-foreground);
-	border: none;
-	padding: 8px 12px;
-	border-radius: 2px;
-	cursor: pointer;
-	font-size: 12px;
+#refresh-button:hover {
+    background-color: var(--vscode-button-hoverBackground);
+    transform: translateY(-1px);
 }
 
-button:hover {
-	background-color: var(--vscode-button-hoverBackground);
+#refresh-button:active {
+    transform: translateY(0);
+    background-color: var(--vscode-button-background);
 }
 
-button:active {
-	background-color: var(--vscode-button-background);
+/* Loading state */
+.loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+    font-size: 14px;
 }
 
-.error-message {
-	padding: 16px;
-	border-radius: 4px;
-	background-color: var(--vscode-inputValidation-errorBackground);
-	border: 1px solid var(--vscode-inputValidation-errorBorder);
-	color: var(--vscode-inputValidation-errorForeground);
-	margin-bottom: 16px;
-	text-align: center;
+.loading::before {
+    content: "⏳ ";
+    margin-right: 8px;
 }
 
-.error-help {
-	margin-top: 8px;
-	font-size: 12px;
-	opacity: 0.8;
+/* Error state */
+.error {
+    text-align: center;
+    padding: 20px;
+    color: var(--vscode-errorForeground);
+    background-color: var(--vscode-inputValidation-errorBackground);
+    border: 1px solid var(--vscode-inputValidation-errorBorder);
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 16px;
 }
 
-/* Debug styling */
+.error::before {
+    content: "⚠️ ";
+    margin-right: 8px;
+}
+
+/* Debug container */
 .debug-container {
-	margin-top: 24px;
-	border-top: 1px solid var(--vscode-editorWidget-border);
-	padding-top: 16px;
+    margin-top: 24px;
+    border-top: 1px solid var(--vscode-panel-border);
+    padding-top: 16px;
 }
 
 .debug-container summary {
-	cursor: pointer;
-	color: var(--vscode-descriptionForeground);
-	font-size: 12px;
+    cursor: pointer;
+    padding: 8px;
+    background-color: var(--vscode-list-inactiveSelectionBackground);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    user-select: none;
 }
 
+.debug-container summary:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+/* Debug output */
 .debug-output {
-	margin-top: 8px;
-	padding: 8px;
-	background-color: var(--vscode-editor-background);
-	border: 1px solid var(--vscode-editorWidget-border);
-	font-family: monospace;
-	font-size: 11px;
-	max-height: 200px;
-	overflow-y: auto;
+    margin-top: 12px;
+    background-color: var(--vscode-terminal-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
 }
 
-.debug-output div {
-	padding: 2px 0;
-	border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+.debug-entry {
+    padding: 4px 8px;
+    font-size: 11px;
+    color: var(--vscode-terminal-foreground);
+    border-bottom: 1px solid var(--vscode-panel-border);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.debug-entry:last-child {
+    border-bottom: none;
+}
+
+/* Scrollbar styling for debug output */
+.debug-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.debug-output::-webkit-scrollbar-track {
+    background: var(--vscode-scrollbarSlider-background);
+}
+
+.debug-output::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbarSlider-hoverBackground);
+    border-radius: 4px;
+}
+
+.debug-output::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbarSlider-activeBackground);
+}
+
+/* Responsive design */
+@media (max-width: 300px) {
+    .container {
+        padding: 12px;
+    }
+    
+    .prayer-item {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .prayer-time {
+        font-size: 12px;
+        padding: 3px 6px;
+    }
+}
+
+/* Animation for prayer item updates */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.prayer-item {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Focus states for accessibility */
+#refresh-button:focus,
+.debug-container summary:focus {
+    outline: 2px solid var(--vscode-focusBorder);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .prayer-item {
+        border-width: 2px;
+    }
+    
+    .prayer-item.current,
+    .prayer-item.next {
+        border-width: 3px;
+    }
 }
