@@ -1,8 +1,8 @@
 {
   "name": "praytime",
   "displayName": "PrayTime",
-  "description": "",
-  "version": "0.0.1",
+  "description": "VS Code icin namaz vakitleri uzantisi - Alt barda geri sayim, 30dk ve 10dk kala bildirimler, sidebar'da gunluk namaz saatleri",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.100.0"
   },
